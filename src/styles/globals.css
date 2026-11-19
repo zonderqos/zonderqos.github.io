@@ -1,0 +1,96 @@
+@import 'tailwindcss';
+
+@layer base {
+  :root,
+  html.dark,
+  html[data-theme='dark'] {
+    --zq-bg: #080b14;
+    --zq-surface: #111827;
+    --zq-surface-elevated: #172033;
+    --zq-border: rgba(148, 163, 184, 0.16);
+    --zq-text-primary: #f8fafc;
+    --zq-text-secondary: #cbd5e1;
+    --zq-text-muted: #94a3b8;
+    --zq-accent-blue: #3b82f6;
+    --zq-accent-purple: #8b5cf6;
+    --zq-glass-bg: rgba(17, 24, 39, 0.72);
+    color-scheme: dark;
+  }
+
+  html.light,
+  html[data-theme='light'] {
+    --zq-bg: #f8fafc;
+    --zq-surface: #ffffff;
+    --zq-surface-elevated: #f1f5f9;
+    --zq-border: rgba(15, 23, 42, 0.14);
+    --zq-text-primary: #0f172a;
+    --zq-text-secondary: #334155;
+    --zq-text-muted: #475569;
+    --zq-accent-blue: #2563eb;
+    --zq-accent-purple: #7c3aed;
+    --zq-glass-bg: rgba(255, 255, 255, 0.84);
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family:
+      'Inter',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+    background-color: var(--zq-bg);
+    color: var(--zq-text-primary);
+    overflow-x: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  body {
+    background-color: var(--zq-bg);
+    color: var(--zq-text-primary);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+.zq-glass {
+  background-color: var(--zq-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--zq-border);
+}
+
+.zq-surface-card {
+  background-color: var(--zq-surface);
+  border: 1px solid var(--zq-border);
+}
+
+.zq-surface-elevated {
+  background-color: var(--zq-surface-elevated);
+  border: 1px solid var(--zq-border);
+}
+
+.zq-text-primary {
+  color: var(--zq-text-primary);
+}
+
+.zq-text-secondary {
+  color: var(--zq-text-secondary);
+}
+
+.zq-text-muted {
+  color: var(--zq-text-muted);
+}
