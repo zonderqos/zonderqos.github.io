@@ -1,0 +1,93 @@
+name: Record ZonderqOS GitHub Release Download Snapshots
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record-snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fetch live GitHub Releases and append timestamped snapshot
+        run: |
+          node -e '
+          const fs = require("fs");
+          const path = "public/data/download-snapshots.json";
+          async function run() {
+            const allReleases = [];
+            for (let page = 1; page <= 10; page++) {
+              const res = await fetch(`https://api.github.com/repos/dwierzbicki11/ZOnderqOS/releases?per_page=100&page=${page}`, {
+                headers: { "Accept": "application/vnd.github+json", "User-Agent": "zonderqos-website-snapshot-bot" }
+              });
+              if (!res.ok) throw new Error(`GitHub API HTTP ${res.status}`);
+              const items = await res.json();
+              if (!Array.isArray(items) || items.length === 0) break;
+              allReleases.push(...items);
+              if (items.length < 100) break;
+            }
+            const published = allReleases.filter((r) => r && !r.draft && r.tag_name);
+            let totalIsoDownloads = 0;
+            let totalAssetDownloads = 0;
+            const perRelease = {};
+            for (const rel of published) {
+              const assets = Array.isArray(rel.assets) ? rel.assets : [];
+              let relIso = 0;
+              for (const a of assets) {
+                const count = typeof a.download_count === "number" ? a.download_count : 0;
+                totalAssetDownloads += count;
+                if (typeof a.name === "string" && a.name.toLowerCase().endsWith(".iso")) {
+                  totalIsoDownloads += count;
+                  relIso += count;
+                }
+              }
+              perRelease[rel.tag_name] = relIso;
+            }
+            const now = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+            const dataset = JSON.parse(fs.readFileSync(path, "utf8"));
+            const snapshots = Array.isArray(dataset.snapshots) ? dataset.snapshots : [];
+            const last = snapshots[snapshots.length - 1];
+            const sameDay = last && last.timestamp.slice(0, 10) === now.slice(0, 10);
+            if (sameDay) {
+              last.timestamp = now;
+              last.totalIsoDownloads = totalIsoDownloads;
+              last.totalAssetDownloads = totalAssetDownloads;
+              last.perRelease = perRelease;
+            } else {
+              snapshots.push({
+                timestamp: now,
+                totalIsoDownloads,
+                totalAssetDownloads,
+                perRelease
+              });
+            }
+            dataset.lastUpdated = now;
+            dataset.snapshots = snapshots.slice(-365);
+            fs.writeFileSync(path, JSON.stringify(dataset, null, 2) + "\n");
+            console.log(`Recorded snapshot at ${now}: totalIsoDownloads=${totalIsoDownloads}`);
+          }
+          run().catch((err) => { console.error(err); process.exit(1); });
+          '
+
+      - name: Commit and push updated snapshot dataset if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain public/data/download-snapshots.json)" ]]; then
+            git add public/data/download-snapshots.json
+            git commit -m "chore(analytics): update GitHub Releases download snapshot"
+            git push
+          else
+            echo "No snapshot changes to commit."
+          fi

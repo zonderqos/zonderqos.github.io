@@ -5,6 +5,7 @@ import {
   Award,
   CheckCircle2,
   Cpu,
+  Disc,
   Download,
   ExternalLink,
   HardDrive,
@@ -17,10 +18,15 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { uiText } from '@/data/i18n';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReleases } from '@/hooks/useReleases';
 
 export function HeroSection(): React.ReactElement {
   const reducedMotion = useReducedMotion();
+  const { stats, isLoading } = useReleases();
   const [spotlight, setSpotlight] = useState<{ x: number; y: number }>({ x: 50, y: 35 });
+
+  const latestRelease = stats.latestDownloadableRelease;
+  const primaryIso = latestRelease?.primaryIsoAsset ?? null;
 
   const handleMouseMove = (event: React.MouseEvent<HTMLElement>) => {
     if (reducedMotion) return;
@@ -104,12 +110,12 @@ export function HeroSection(): React.ReactElement {
             {uiText.hero.description}
           </motion.p>
 
-          {/* Elegant Alpha Completed Milestone Badge Card */}
+          {/* Elegant Alpha Completed Milestone + Live GitHub Release Summary Card */}
           <motion.div
             initial={reducedMotion ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.28 }}
-            className="mx-auto mt-7 max-w-2xl rounded-2xl border border-emerald-500/35 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 p-4 text-left shadow-lg shadow-emerald-950/20"
+            className="mx-auto mt-7 max-w-3xl rounded-2xl border border-emerald-500/35 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 p-4 text-left shadow-lg shadow-emerald-950/20"
           >
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-start gap-3">
@@ -126,7 +132,9 @@ export function HeroSection(): React.ReactElement {
                     </span>
                   </div>
                   <p className="zq-text-secondary mt-0.5 text-xs">
-                    {uiText.hero.alphaCompletedCardDetail}
+                    {latestRelease && primaryIso
+                      ? `Latest Published Release: ${latestRelease.name} (${latestRelease.tagName}) • Asset: ${primaryIso.name} (${primaryIso.sizeFormatted.combined}) • Cumulative ISO Downloads: ${stats.totalIsoDownloads.toLocaleString('en-US')}`
+                      : uiText.hero.alphaCompletedCardDetail}
                   </p>
                 </div>
               </div>
@@ -139,30 +147,51 @@ export function HeroSection(): React.ReactElement {
             </div>
           </motion.div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons (With Direct Official ISO Download Shortcut + Release Dashboard + Features + GitHub) */}
           <motion.div
             initial={reducedMotion ? false : { opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.34 }}
             className="mt-8 flex flex-wrap items-center justify-center gap-3.5"
           >
-            <Button href="#features" variant="primary" size="lg">
+            {primaryIso ? (
+              <Button href={primaryIso.browserDownloadUrl} variant="primary" size="lg">
+                <Download className="h-4 w-4" />
+                <span>
+                  Download ISO ({primaryIso.name} • {primaryIso.sizeFormatted.mb})
+                </span>
+              </Button>
+            ) : (
+              <Button href="#downloads" variant="primary" size="lg">
+                <Download className="h-4 w-4" />
+                <span>{uiText.hero.ctaDownload}</span>
+              </Button>
+            )}
+
+            <Button href="#downloads" variant="secondary" size="lg">
+              <Disc className="h-4 w-4 text-[#3B82F6]" />
+              <span>
+                Release Center
+                {!isLoading && stats.totalPublishedReleases > 0
+                  ? ` (${stats.totalIsoDownloads.toLocaleString('en-US')} ISO Downloads)`
+                  : ''}
+              </span>
+            </Button>
+
+            <Button href="#features" variant="outline" size="lg">
               <span>{uiText.hero.ctaFeatures}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
+
             <Button
               href="https://github.com/dwierzbicki11/ZOnderqOS"
               target="_blank"
               rel="noopener noreferrer"
-              variant="secondary"
+              variant="outline"
               size="lg"
             >
               <span>{uiText.hero.ctaGithub}</span>
               <ExternalLink className="h-4 w-4" />
-            </Button>
-            <Button href="#downloads" variant="outline" size="lg">
-              <Download className="h-4 w-4" />
-              <span>{uiText.hero.ctaDownload}</span>
             </Button>
           </motion.div>
         </div>

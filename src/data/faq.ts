@@ -27,14 +27,14 @@ export const faqData: FaqItem[] = [
     category: 'Roadmap',
     question: 'Is ZonderqOS Alpha completed?',
     answer:
-      'Yes. ZonderqOS Alpha development is 100% completed and tagged in the repository as v1.0.2-alpha.1 (Build 3120). All Alpha milestones — including migration to Cosmos Kernel Gen3 3.0.97, the 32-bit UEFI GOP window manager, 38 desktop applications, 91 shell commands, fail-closed FAT32 storage, and full English system UI localization — have been finished.',
+      'Yes. ZonderqOS Alpha development is 100% completed, with the official ZonderqOS-Alfa (v1.0.0-alfa) release published on GitHub Releases and the repository tagged at v1.0.2-alpha.1 (Build 3120). All Alpha milestones — including Cosmos Kernel Gen3 integration, the 32-bit UEFI GOP window manager, 38 desktop applications, 91 shell commands, fail-closed FAT32 storage, and full English system UI localization — have been finished.',
   },
   {
     id: 'faq-where-can-i-download',
     category: 'Releases',
     question: 'Where can I download ZonderqOS?',
     answer:
-      'Official public ISO releases will be distributed exclusively via GitHub Releases (https://github.com/dwierzbicki11/ZOnderqOS/releases). While Alpha development is completed in source code (v1.0.2-alpha.1), no pre-built public ISO binary has been uploaded to GitHub Releases yet. Developers can clone the repository and build a bootable x86_64 Limine ISO locally using ./verify-builds.sh and dotnet build -r linux-x64.',
+      'You can download the official bootable ZonderqOS ISO directly from the Downloads & Release Center section on this website or from GitHub Releases (https://github.com/dwierzbicki11/ZOnderqOS/releases). All Download ISO buttons link directly to the official GitHub release asset (asset.browser_download_url) and include the published SHA-256 digest for integrity verification on Linux and Windows.',
   },
   {
     id: 'faq-what-comes-after-alpha',

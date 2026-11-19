@@ -1,7 +1,8 @@
 import React from 'react';
-import { CheckCircle2, ExternalLink, ShieldCheck, Terminal } from 'lucide-react';
+import { CheckCircle2, Disc, ExternalLink, ShieldCheck, Terminal } from 'lucide-react';
 import { ZonderqLogo } from '@/assets/ZonderqLogo';
 import { uiText } from '@/data/i18n';
+import { useReleases } from '@/hooks/useReleases';
 import type { NavSectionId } from '@/types/site';
 
 const FOOTER_SECTIONS: NavSectionId[] = [
@@ -15,6 +16,9 @@ const FOOTER_SECTIONS: NavSectionId[] = [
 ];
 
 export function Footer(): React.ReactElement {
+  const { stats } = useReleases();
+  const latestPub = stats.latestPublishedRelease;
+
   return (
     <footer className="border-t border-slate-800/80 bg-[#050811] text-slate-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -28,18 +32,34 @@ export function Footer(): React.ReactElement {
                   Zonderq<span className="text-[#3B82F6]">OS</span>
                 </span>
                 <p className="font-mono text-xs text-slate-400">
-                  v1.0.2-alpha.1 • Build 3120 • Cosmos Kernel Gen3 (3.0.97)
+                  {latestPub
+                    ? `Latest Release: ${latestPub.name} (${latestPub.tagName}) • Cosmos Kernel Gen3 (3.0.97)`
+                    : 'v1.0.2-alpha.1 • Build 3120 • Cosmos Kernel Gen3 (3.0.97)'}
                 </p>
               </div>
             </div>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-slate-400">
               {uiText.footer.description}
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 font-mono text-xs font-semibold text-emerald-300">
-              <CheckCircle2 className="h-4 w-4 shrink-0" />
-              <span>
-                {uiText.footer.developmentStatusLabel}: {uiText.footer.developmentStatusValue}
-              </span>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 font-mono text-xs font-semibold text-emerald-300">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>
+                  {uiText.footer.developmentStatusLabel}: {uiText.footer.developmentStatusValue}
+                </span>
+              </div>
+
+              {latestPub && (
+                <a
+                  href="#downloads"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-blue-500/40 bg-blue-500/15 px-3 py-1.5 font-mono text-xs font-semibold text-blue-300 transition hover:bg-blue-500/25"
+                >
+                  <Disc className="h-3.5 w-3.5" />
+                  <span>
+                    Public ISO: {latestPub.tagName} ({stats.totalIsoDownloads} downloads)
+                  </span>
+                </a>
+              )}
             </div>
             <div className="mt-3 flex items-start gap-2 rounded-xl border border-blue-500/25 bg-blue-500/10 px-3 py-2 text-xs text-blue-300">
               <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
@@ -90,7 +110,7 @@ export function Footer(): React.ReactElement {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-slate-300 transition hover:text-[#3B82F6]"
                 >
-                  <span>Official GitHub Releases & Tags</span>
+                  <span>Official GitHub Releases & ISO Assets</span>
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </li>

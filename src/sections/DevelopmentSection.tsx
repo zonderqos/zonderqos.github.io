@@ -6,10 +6,12 @@ import {
   CheckCircle2,
   Copy,
   Cpu,
+  Download,
   ExternalLink,
   GitBranch,
   HardDrive,
   Layers,
+  PackageCheck,
   ShieldCheck,
   Terminal,
 } from 'lucide-react';
@@ -25,6 +27,7 @@ import {
 import { uiText } from '@/data/i18n';
 import { generationComparisonData } from '@/data/screenshots';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useReleases } from '@/hooks/useReleases';
 import type { HardwareTestEntry } from '@/types/site';
 
 function getHardwareBadgeVariant(status: HardwareTestEntry['cosmos3097Status']) {
@@ -42,6 +45,7 @@ function getHardwareBadgeVariant(status: HardwareTestEntry['cosmos3097Status']) 
 
 export function DevelopmentSection(): React.ReactElement {
   const reducedMotion = useReducedMotion();
+  const { releases } = useReleases();
   const [copiedCommandIndex, setCopiedCommandIndex] = useState<number | null>(null);
 
   const handleCopyCommand = async (command: string, index: number) => {
@@ -149,7 +153,7 @@ export function DevelopmentSection(): React.ReactElement {
           </motion.div>
         </div>
 
-        {/* Developer Quick Start Commands + News/Changelogs Panel */}
+        {/* Developer Quick Start Commands + Synchronized Live Public Releases & News Panel */}
         <div className="mt-10 grid gap-6 lg:grid-cols-12">
           {/* Quick Start */}
           <Card className="lg:col-span-7">
@@ -184,7 +188,7 @@ export function DevelopmentSection(): React.ReactElement {
               ))}
             </div>
 
-            {/* Links to Source Code, Bug Tracker & Docs */}
+            {/* Links to Source Code, Bug Tracker, GitHub Commit History & Docs */}
             <div className="mt-6 border-t border-slate-500/20 pt-5">
               <h4 className="zq-text-primary text-sm font-bold">{uiText.development.linksTitle}</h4>
               <div className="mt-3 flex flex-wrap gap-3">
@@ -197,6 +201,16 @@ export function DevelopmentSection(): React.ReactElement {
                 >
                   <span>{uiText.development.sourceCodeLink}</span>
                   <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  href="https://github.com/dwierzbicki11/ZOnderqOS/commits/main"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="secondary"
+                  size="sm"
+                >
+                  <GitBranch className="h-3.5 w-3.5 text-[#3B82F6]" />
+                  <span>GitHub Commit History</span>
                 </Button>
                 <Button
                   href="https://github.com/dwierzbicki11/ZOnderqOS/issues"
@@ -222,12 +236,68 @@ export function DevelopmentSection(): React.ReactElement {
             </div>
           </Card>
 
-          {/* News & Changelogs Panel */}
+          {/* Synchronized Recent Public GitHub Releases + Engineering News Panel */}
           <Card className="lg:col-span-5">
             <h3 className="zq-text-primary text-xl font-bold">
               {uiText.development.changelogPanelTitle}
             </h3>
-            <div className="mt-5 space-y-4">
+
+            {/* Live Public GitHub Releases Box */}
+            {releases.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {releases.slice(0, 2).map((rel) => (
+                  <div
+                    key={rel.id}
+                    className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Badge variant="implemented" className="font-mono text-[11px]">
+                        <PackageCheck className="h-3 w-3" />
+                        <span>Live GitHub Release: {rel.tagName}</span>
+                      </Badge>
+                      <span className="font-mono text-xs text-emerald-300">
+                        {new Date(rel.publishedAt).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    <h4 className="zq-text-primary mt-2 text-sm font-extrabold">{rel.name}</h4>
+                    <p className="zq-text-secondary mt-1 line-clamp-3 text-xs leading-relaxed">
+                      {rel.bodyMarkdown.split('\n').slice(0, 4).join(' ')}
+                    </p>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                      <span className="text-emerald-300">
+                        ISO Downloads: <strong>{rel.totalIsoDownloads}</strong>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        {rel.primaryIsoAsset && (
+                          <a
+                            href={rel.primaryIsoAsset.browserDownloadUrl}
+                            className="inline-flex items-center gap-1 text-blue-300 hover:underline"
+                          >
+                            <Download className="h-3 w-3" />
+                            <span>{rel.primaryIsoAsset.name}</span>
+                          </a>
+                        )}
+                        <a
+                          href={rel.htmlUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-slate-300 hover:text-white hover:underline"
+                        >
+                          <span>Release Notes</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-4 space-y-4">
               {newsChangelogData.map((news) => (
                 <div key={news.id} className="zq-surface-elevated rounded-xl p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
