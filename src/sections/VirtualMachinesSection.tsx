@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   AlertTriangle,
+  AppWindow,
   Bug,
   Check,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   ExternalLink,
   HardDrive,
   Info,
+  Laptop,
   Layers,
   Monitor,
   Package,
@@ -26,7 +28,9 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import {
+  hostOsProfilesData,
   limineBootEntriesData,
+  linuxDistroGuidesData,
   platformGuidesData,
   recommendedVmSpecsData,
   vmTroubleshootingData,
@@ -35,7 +39,12 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useReleases } from '@/hooks/useReleases';
 import { cn } from '@/lib/utils';
 import { detectVmPackageAssets } from '@/lib/vmAssetDetector';
-import type { HypervisorVerificationLevel, VmPlatformId } from '@/types/installation';
+import type {
+  HostOsId,
+  HypervisorVerificationLevel,
+  LinuxDistroId,
+  VmPlatformId,
+} from '@/types/installation';
 
 function getVerificationBadgeVariant(level: HypervisorVerificationLevel) {
   switch (level) {
@@ -61,16 +70,35 @@ function getPlatformIcon(id: VmPlatformId) {
   }
 }
 
+function getHostOsIcon(id: HostOsId) {
+  switch (id) {
+    case 'linux':
+      return Terminal;
+    case 'windows':
+      return AppWindow;
+    case 'macos':
+      return Laptop;
+  }
+}
+
 export function VirtualMachinesSection(): React.ReactElement {
   const reducedMotion = useReducedMotion();
   const { stats } = useReleases();
+  const [selectedHostOs, setSelectedHostOs] = useState<HostOsId>('linux');
+  const [selectedLinuxDistro, setSelectedLinuxDistro] = useState<LinuxDistroId>('ubuntu-debian');
   const [selectedPlatform, setSelectedPlatform] = useState<VmPlatformId>('virtualbox');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const latestRelease = stats.latestDownloadableRelease;
   const detectedPackages = detectVmPackageAssets(latestRelease?.assets ?? []);
+
+  const activeHostProfile =
+    hostOsProfilesData.find((h) => h.id === selectedHostOs) ?? hostOsProfilesData[0];
+  const activeDistro =
+    linuxDistroGuidesData.find((d) => d.id === selectedLinuxDistro) ?? linuxDistroGuidesData[0];
   const activeGuide =
     platformGuidesData.find((p) => p.id === selectedPlatform) ?? platformGuidesData[0];
+  const activeSteps = activeGuide.stepsByHost[selectedHostOs];
 
   const handleCopy = async (key: string, text: string) => {
     try {
@@ -86,9 +114,9 @@ export function VirtualMachinesSection(): React.ReactElement {
     <section id="virtual-machines" className="py-20 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <SectionHeader
-          eyebrow="Virtualization & Bare-Metal Setup"
+          eyebrow="Multi-Platform Virtualization & Bare-Metal Setup"
           title="Virtual Machines & USB Installation Guide"
-          subtitle="Step-by-step instructions for running ZonderqOS on Oracle VirtualBox, VMware Workstation, QEMU/KVM on Linux, and physical UEFI computers via bootable USB."
+          subtitle="Tailored instructions for Windows 10/11, Linux (Ubuntu/Debian, Arch Linux, Fedora, openSUSE), and macOS / MacBook (Apple Silicon M1–M4 & Intel) across VirtualBox, VMware, QEMU/KVM/UTM, and Physical USB."
         />
 
         {/* Experimental Hypervisor & Storage Policy Disclaimer Banner */}
@@ -102,8 +130,8 @@ export function VirtualMachinesSection(): React.ReactElement {
               <p className="zq-text-secondary mt-1">
                 <strong>QEMU/KVM (x86_64 q35 + ICH9 AHCI + xHCI)</strong> is the primary reference
                 platform verified in automated repository CI (85 Python QMP suites).{' '}
-                <strong>Oracle VirtualBox</strong> and <strong>VMware Workstation</strong> are
-                supported via standard UEFI GOP + SATA AHCI emulation and are marked as{' '}
+                <strong>Oracle VirtualBox</strong> and <strong>VMware Workstation / Fusion</strong>{' '}
+                are supported via standard UEFI GOP + SATA AHCI emulation and are marked as{' '}
                 <span className="font-semibold text-amber-300">
                   Experimental / Community Hypervisor Targets
                 </span>{' '}
@@ -231,16 +259,19 @@ export function VirtualMachinesSection(): React.ReactElement {
           </Card>
         </div>
 
-        {/* 2. Interactive Platform Selector Tabs (VirtualBox | VMware | QEMU/KVM | Physical USB) */}
+        {/* 2. STEP 1: Select Host Operating System (Linux [Ubuntu/Arch/Fedora/openSUSE] | Windows 10/11 | macOS MacBook) */}
         <div className="mt-14">
-          <div className="mb-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
+              <Badge variant="default" className="mb-2 font-mono text-xs">
+                Step 1 of 2 • Choose Your Host Computer OS
+              </Badge>
               <h3 className="zq-text-primary text-2xl font-extrabold">
-                Platform-Specific Installation Guides
+                Select Your Host Operating System
               </h3>
               <p className="zq-text-secondary mt-1 text-xs sm:text-sm">
-                Select your target hypervisor or physical USB medium below for tested commands and
-                controller settings.
+                Switch between Linux (Ubuntu/Debian, Arch, Fedora, openSUSE), Windows 10/11
+                (PowerShell / DiskPart / WSL2), and macOS / MacBook (Apple Silicon M1–M4 & Intel).
               </p>
             </div>
 
@@ -263,6 +294,241 @@ export function VirtualMachinesSection(): React.ReactElement {
                 </Button>
               </div>
             )}
+          </div>
+
+          {/* 3 Host OS Tabs */}
+          <div
+            role="tablist"
+            aria-label="Select your host operating system"
+            className="grid gap-3 md:grid-cols-3"
+          >
+            {hostOsProfilesData.map((host) => {
+              const HostIcon = getHostOsIcon(host.id);
+              const isSelected = selectedHostOs === host.id;
+              return (
+                <button
+                  key={host.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isSelected}
+                  onClick={() => setSelectedHostOs(host.id)}
+                  className={cn(
+                    'flex flex-col items-start justify-between rounded-2xl border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer',
+                    isSelected
+                      ? 'border-[#3B82F6] bg-gradient-to-br from-[#3B82F6]/20 via-[#8B5CF6]/15 to-transparent shadow-lg shadow-blue-500/10'
+                      : 'zq-surface-card hover:border-blue-500/40',
+                  )}
+                >
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-xl border',
+                        isSelected
+                          ? 'border-blue-400/50 bg-blue-500/20 text-blue-300'
+                          : 'border-slate-700 bg-slate-800/70 text-slate-300',
+                      )}
+                    >
+                      <HostIcon className="h-5 w-5" />
+                    </div>
+                    <Badge
+                      variant={isSelected ? 'implemented' : 'outline'}
+                      className="font-mono text-[10px]"
+                    >
+                      {host.badge}
+                    </Badge>
+                  </div>
+                  <div className="mt-3.5">
+                    <div className="zq-text-primary text-base font-extrabold">{host.name}</div>
+                    <p className="zq-text-secondary mt-1 text-xs leading-relaxed">
+                      {host.subtitle}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Host OS Environment Card + Linux Distribution Sub-Selector */}
+          <Card className="mt-5 border-blue-500/35 p-5 sm:p-6">
+            {/* If Linux is selected, show the 4 Linux Distribution Sub-Tabs */}
+            {selectedHostOs === 'linux' && (
+              <div className="mb-6 border-b border-slate-500/20 pb-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-4 w-4 text-emerald-400" />
+                    <h4 className="zq-text-primary text-sm font-extrabold">
+                      Select Your Linux Distribution ({activeDistro.name})
+                    </h4>
+                  </div>
+                  <Badge variant="completed" className="font-mono text-[11px]">
+                    Package Manager: {activeDistro.packageManager}
+                  </Badge>
+                </div>
+
+                {/* Distro Pills */}
+                <div
+                  role="tablist"
+                  aria-label="Select Linux distribution"
+                  className="mt-3 flex flex-wrap gap-2"
+                >
+                  {linuxDistroGuidesData.map((distro) => {
+                    const isDistroSelected = selectedLinuxDistro === distro.id;
+                    return (
+                      <button
+                        key={distro.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={isDistroSelected}
+                        onClick={() => setSelectedLinuxDistro(distro.id)}
+                        className={cn(
+                          'rounded-xl border px-3.5 py-2 font-mono text-xs font-semibold transition cursor-pointer',
+                          isDistroSelected
+                            ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300'
+                            : 'zq-surface-elevated zq-text-secondary hover:border-emerald-500/40',
+                        )}
+                      >
+                        {distro.shortName}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Selected Linux Distro Commands */}
+                <div className="mt-4 grid gap-4 lg:grid-cols-12">
+                  <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#060911] lg:col-span-8">
+                    <div className="flex items-center justify-between border-b border-slate-800/90 bg-slate-900/70 px-3.5 py-2">
+                      <span className="font-mono text-[11px] text-slate-400">
+                        {activeDistro.name} — Install QEMU, OVMF & Disk Utilities
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleCopy(
+                            `distro-${activeDistro.id}`,
+                            `${activeDistro.installPackagesCmd}\n# Optional VirtualBox install:\n${activeDistro.vboxInstallCmd}`,
+                          )
+                        }
+                        aria-label={`Copy install command for ${activeDistro.name}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-200 transition hover:border-emerald-500 hover:text-white cursor-pointer"
+                      >
+                        {copiedKey === `distro-${activeDistro.id}` ? (
+                          <>
+                            <Check className="h-3 w-3 text-emerald-400" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3 w-3" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <pre className="overflow-x-auto p-3.5 font-mono text-xs leading-relaxed text-emerald-300">
+                      <code>
+                        {activeDistro.installPackagesCmd}
+                        {'\n'}# Optional VirtualBox package:{'\n'}
+                        {activeDistro.vboxInstallCmd}
+                      </code>
+                    </pre>
+                  </div>
+
+                  <div className="zq-surface-elevated flex flex-col justify-between rounded-xl p-4 text-xs lg:col-span-4">
+                    <div>
+                      <div className="font-mono font-bold text-blue-300">
+                        OVMF UEFI Firmware Path:
+                      </div>
+                      <code className="mt-1 block break-all font-mono text-xs text-slate-200">
+                        {activeDistro.ovmfFirmwarePath}
+                      </code>
+                      <p className="zq-text-secondary mt-2 leading-relaxed">{activeDistro.notes}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Host OS Quick Disk Prep & Architecture Note */}
+            <div className="grid gap-5 lg:grid-cols-12">
+              <div className="space-y-3 lg:col-span-5">
+                <div className="flex items-center gap-2">
+                  <Badge variant="implemented" className="font-mono text-xs">
+                    {activeHostProfile.shortName} Host Environment
+                  </Badge>
+                </div>
+                <h4 className="zq-text-primary text-base font-extrabold">
+                  {activeHostProfile.diskPrepTitle}
+                </h4>
+                <p className="zq-text-secondary text-xs leading-relaxed">
+                  {activeHostProfile.diskPrepSummary}
+                </p>
+                <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-3 text-xs leading-relaxed">
+                  <strong className="text-blue-300">Host Architecture Note:</strong>{' '}
+                  <span className="zq-text-secondary">{activeHostProfile.architectureNote}</span>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-slate-800 bg-[#060911] lg:col-span-7">
+                <div className="flex items-center justify-between border-b border-slate-800/90 bg-slate-900/70 px-3.5 py-2">
+                  <span className="font-mono text-[11px] text-slate-400">
+                    {activeHostProfile.shellLabel} — Prepare ZONDERQDATA Disk & Verify ISO
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopy(
+                        `host-disk-${activeHostProfile.id}`,
+                        `# 1. Verify ISO SHA-256:\n${activeHostProfile.sha256VerifyCmd}\n\n# 2. Create MBR FAT32 ZONDERQDATA Disk:\n${activeHostProfile.diskPrepCommands.join('\n')}`,
+                      )
+                    }
+                    aria-label={`Copy disk preparation commands for ${activeHostProfile.name}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 font-mono text-[11px] font-semibold text-slate-200 transition hover:border-blue-500 hover:text-white cursor-pointer"
+                  >
+                    {copiedKey === `host-disk-${activeHostProfile.id}` ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-400" />
+                        <span>Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        <span>Copy Commands</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+                <pre className="overflow-x-auto p-3.5 font-mono text-xs leading-relaxed text-blue-300">
+                  <code>
+                    # 1. Verify ZonderqOS.iso SHA-256:{'\n'}
+                    {activeHostProfile.sha256VerifyCmd}
+                    {'\n\n'}# 2. Create MBR FAT32 ZONDERQDATA Disk:{'\n'}
+                    {activeHostProfile.diskPrepCommands.join('\n')}
+                  </code>
+                </pre>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* 3. STEP 2: Select Target Virtual Machine or Physical USB Platform */}
+        <div className="mt-12">
+          <div className="mb-5">
+            <Badge variant="default" className="mb-2 font-mono text-xs">
+              Step 2 of 2 • Choose Target Hypervisor or Physical USB (Adapted for{' '}
+              {activeHostProfile.shortName})
+            </Badge>
+            <h3 className="zq-text-primary text-2xl font-extrabold">
+              Select Target Virtualization Platform or Physical USB
+            </h3>
+            <p className="zq-text-secondary mt-1 text-xs sm:text-sm">
+              Commands below are automatically adapted for your selected host OS (
+              <strong className="zq-text-primary">
+                {selectedHostOs === 'linux'
+                  ? `Linux — ${activeDistro.name}`
+                  : activeHostProfile.name}
+              </strong>
+              ).
+            </p>
           </div>
 
           {/* 4 Selectable Platform Tabs */}
@@ -321,9 +587,9 @@ export function VirtualMachinesSection(): React.ReactElement {
             })}
           </div>
 
-          {/* Active Platform Guide Content */}
+          {/* Active Platform + Host OS Guide Content */}
           <motion.div
-            key={activeGuide.id}
+            key={`${activeGuide.id}-${selectedHostOs}`}
             initial={reducedMotion ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25 }}
@@ -336,12 +602,15 @@ export function VirtualMachinesSection(): React.ReactElement {
                     <Badge variant={getVerificationBadgeVariant(activeGuide.verificationLevel)}>
                       {activeGuide.verificationLevel}
                     </Badge>
+                    <Badge variant="default" className="font-mono text-xs">
+                      Host: {activeHostProfile.name}
+                    </Badge>
                     <Badge variant="outline" className="font-mono text-xs">
                       x86_64 • UEFI GOP 1366×768×32 • FAT32 ZONDERQDATA
                     </Badge>
                   </div>
                   <h4 className="zq-text-primary mt-3 text-2xl font-extrabold sm:text-3xl">
-                    {activeGuide.name} Installation Guide
+                    {activeGuide.name} on {activeHostProfile.shortName}
                   </h4>
                   <p className="zq-text-secondary mt-2 max-w-3xl text-sm leading-relaxed">
                     {activeGuide.summary}
@@ -391,11 +660,11 @@ export function VirtualMachinesSection(): React.ReactElement {
                 </div>
               </div>
 
-              {/* Step-by-Step Instructions */}
+              {/* Step-by-Step Instructions for Selected Host OS */}
               <div className="mt-8 space-y-5">
-                {activeGuide.steps.map((step) => {
+                {activeSteps.map((step) => {
                   const cmdBlock = step.commands ? step.commands.join('\n') : null;
-                  const copyId = `${activeGuide.id}-step-${step.stepNumber}`;
+                  const copyId = `${activeGuide.id}-${selectedHostOs}-step-${step.stepNumber}`;
                   return (
                     <div
                       key={step.stepNumber}
@@ -422,7 +691,7 @@ export function VirtualMachinesSection(): React.ReactElement {
                             <div className="mt-3.5 overflow-hidden rounded-xl border border-slate-800 bg-[#060911]">
                               <div className="flex items-center justify-between border-b border-slate-800/90 bg-slate-900/70 px-3.5 py-2">
                                 <span className="font-mono text-[11px] text-slate-400">
-                                  bash / shell
+                                  {step.shellLabel ?? activeHostProfile.shellLabel}
                                 </span>
                                 <button
                                   type="button"
@@ -458,7 +727,7 @@ export function VirtualMachinesSection(): React.ReactElement {
           </motion.div>
         </div>
 
-        {/* 3. Optional Preconfigured VM Packages & CI Packaging Architecture (Section 10) */}
+        {/* 4. Optional Preconfigured VM Packages & CI Packaging Architecture (Section 10) */}
         <Card className="mt-14 border-purple-500/35 p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
@@ -494,7 +763,7 @@ export function VirtualMachinesSection(): React.ReactElement {
                   </Badge>
                 </div>
                 <p className="zq-text-secondary mt-2 text-xs">
-                  Official hybrid UEFI/BIOS Limine bootable ISO image for QEMU/KVM, VirtualBox,
+                  Official hybrid UEFI/BIOS Limine bootable ISO image for QEMU/KVM/UTM, VirtualBox,
                   VMware, and physical USB drives.
                 </p>
               </div>
@@ -602,7 +871,7 @@ export function VirtualMachinesSection(): React.ReactElement {
           </div>
         </Card>
 
-        {/* 4. Comprehensive Troubleshooting Guide (Section 11) */}
+        {/* 5. Comprehensive Troubleshooting Guide (Section 11) */}
         <div className="mt-14">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
@@ -611,8 +880,8 @@ export function VirtualMachinesSection(): React.ReactElement {
                 <span>Boot, Storage & Hypervisor Troubleshooting</span>
               </h3>
               <p className="zq-text-secondary mt-1 text-xs sm:text-sm">
-                Solutions for common UEFI, Limine slot A/B, ZONDERQDATA volume, framebuffer, and
-                input errors.
+                Solutions for common UEFI, Limine slot A/B, ZONDERQDATA volume, Apple Silicon M1–M4
+                emulation, framebuffer, and input errors.
               </p>
             </div>
 
@@ -629,7 +898,7 @@ export function VirtualMachinesSection(): React.ReactElement {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {vmTroubleshootingData.map((item) => (
               <Card key={item.id} className="flex flex-col justify-between p-5">
                 <div>

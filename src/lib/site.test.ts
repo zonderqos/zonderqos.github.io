@@ -31,7 +31,9 @@ import {
 import { faqData } from '../data/faq.ts';
 import { uiText } from '../data/i18n.ts';
 import {
+  hostOsProfilesData,
   limineBootEntriesData,
+  linuxDistroGuidesData,
   platformGuidesData,
   recommendedVmSpecsData,
   vmTroubleshootingData,
@@ -380,11 +382,25 @@ test('Historical snapshot analytics never fabricate history and compute daily/we
   assert.equal(comparisons[0].deltaFromPreviousRelease, null);
 });
 
-test('Virtual Machines & Installation Guide data covers all 4 platforms, 11 VM specs, Limine entries, and non-fake VM asset detection', () => {
+test('Virtual Machines & Installation Guide data covers all 4 platforms, 3 host OS profiles (Windows, Linux distros, macOS), 11 VM specs, and non-fake VM asset detection', () => {
   assert.equal(recommendedVmSpecsData.length, 11);
   assert.equal(limineBootEntriesData.length, 3);
   assert.equal(platformGuidesData.length, 4);
-  assert.equal(vmTroubleshootingData.length, 8);
+  assert.equal(hostOsProfilesData.length, 3);
+  assert.equal(linuxDistroGuidesData.length, 4);
+  assert.equal(vmTroubleshootingData.length, 9);
+
+  const hostIds = hostOsProfilesData.map((h) => h.id);
+  assert.deepEqual(hostIds, ['linux', 'windows', 'macos']);
+
+  const distroIds = linuxDistroGuidesData.map((d) => d.id);
+  assert.deepEqual(distroIds, ['ubuntu-debian', 'arch', 'fedora', 'opensuse']);
+
+  for (const platform of platformGuidesData) {
+    assert.ok(platform.stepsByHost.linux.length >= 2);
+    assert.ok(platform.stepsByHost.windows.length >= 2);
+    assert.ok(platform.stepsByHost.macos.length >= 2);
+  }
 
   const vbox = platformGuidesData.find((p) => p.id === 'virtualbox');
   const vmware = platformGuidesData.find((p) => p.id === 'vmware');
@@ -415,6 +431,8 @@ test('100% English language audit passes across all data catalogs, snapshots, an
     verifiedRepoMetrics,
     faqData,
     recommendedVmSpecsData,
+    hostOsProfilesData,
+    linuxDistroGuidesData,
     limineBootEntriesData,
     platformGuidesData,
     vmTroubleshootingData,
