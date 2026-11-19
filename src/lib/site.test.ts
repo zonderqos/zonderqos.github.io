@@ -384,11 +384,11 @@ test('Historical snapshot analytics never fabricate history and compute daily/we
 
 test('Virtual Machines & Installation Guide data covers all 4 platforms, 3 host OS profiles (Windows, Linux distros, macOS), 11 VM specs, and non-fake VM asset detection', () => {
   assert.equal(recommendedVmSpecsData.length, 11);
-  assert.equal(limineBootEntriesData.length, 3);
+  assert.equal(limineBootEntriesData.length, 4);
   assert.equal(platformGuidesData.length, 4);
   assert.equal(hostOsProfilesData.length, 3);
   assert.equal(linuxDistroGuidesData.length, 4);
-  assert.equal(vmTroubleshootingData.length, 9);
+  assert.equal(vmTroubleshootingData.length, 11);
 
   const hostIds = hostOsProfilesData.map((h) => h.id);
   assert.deepEqual(hostIds, ['linux', 'windows', 'macos']);

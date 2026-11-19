@@ -50,19 +50,21 @@ export const recommendedVmSpecsData: VmSpecRow[] = [
   },
   {
     setting: 'Virtual Disk',
-    value: '2–4 GB (minimum 256 MB)',
+    value: '8 GB (minimum 68 MB; 160+ MB for dual ESP + System)',
     notes:
-      'Must contain an MBR (type 0x0C/0x0B) or GPT Basic Data partition (never raw/unpartitioned)',
+      'An empty unformatted SATA/AHCI virtual disk is supported directly by the built-in ZonderqOS Graphical Installer (no manual fdisk/mkfs.vfat required)',
   },
   {
     setting: 'Data Partition',
-    value: 'FAT32, label ZONDERQDATA',
-    notes: 'Fail-closed DataVolumePolicy mounts ONLY a unique FAT32 volume labeled ZONDERQDATA',
+    value: 'Automated by ZonderqOS Installer (ESP + FAT32 ZONDERQDATA)',
+    notes:
+      'The graphical installer automatically creates the 64 MB EFI System Partition (ZONDERQEFI) and ZonderqOS System Partition (FAT32 ZONDERQDATA), installs Limine UEFI/BIOS + BootGuard, and configures Slot A',
   },
   {
     setting: 'Boot Media',
-    value: 'ZonderqOS ISO',
-    notes: 'Attached as an IDE/SATA Optical CD/DVD drive set first in boot order',
+    value: 'ZonderqOS ISO (Live & Installer)',
+    notes:
+      'Boots directly into the ephemeral RAM-backed Live desktop & Graphical Installer even when no ZONDERQDATA partition exists; disconnect ISO after installation',
   },
 ];
 
@@ -205,11 +207,19 @@ export const limineBootEntriesData: BootloaderArchitectureNote[] = [
   },
   {
     id: 'limine-recovery-iso',
-    title: 'Entry 3 (Fresh VM / Direct ISO Kernel)',
+    title: 'Entry 3 (ISO Auto / Live & Installer)',
     menuEntry: '/ZonderqOS Recovery ISO',
     kernelPath: 'boot():/boot/ZonderqOS.elf',
     whenToUse:
-      'Loads ZonderqOS.elf directly from the attached ISO CD-ROM while still mounting your attached ZONDERQDATA FAT32 disk at / for the full graphical desktop. Select this entry on a fresh VM if you attached a blank ZONDERQDATA disk without seeding /boot/slot_a/ZonderqOS.elf!',
+      'Default ISO boot entry. Mounts an existing unique ZONDERQDATA partition if present, or automatically starts the ephemeral RAM-backed Live & Graphical Installer environment when booting on an empty disk.',
+  },
+  {
+    id: 'limine-live-installer',
+    title: 'Entry 4 (Force Live & Installer RAM Mode)',
+    menuEntry: '/ZonderqOS Live & Installer',
+    kernelPath: 'boot():/boot/ZonderqOS.elf (cmdline: live)',
+    whenToUse:
+      'Forces the ephemeral 64 MiB RAM-backed Live desktop and launches the 7-screen ZonderqOS Graphical Installer without mounting or writing to any physical disk until you explicitly confirm a target disk.',
   },
 ];
 
@@ -819,6 +829,24 @@ export const vmTroubleshootingData: TroubleshootingItem[] = [
       'The FAT32 filesystem was formatted directly on a raw unpartitioned block device (superfloppy) or on an EFI System Partition (0xEF), or two different disks labeled ZONDERQDATA are attached simultaneously.',
     solution:
       'DataVolumePolicy.cs explicitly rejects raw unpartitioned disks, 0xEF EFI partitions, and ambiguous multi-disk ZONDERQDATA setups. Format a single primary MBR partition (type 0x0C or 0x0B) using Linux sfdisk, Windows DiskPart (convert mbr + create partition primary), or macOS hdiutil (-layout MBRSPUD).',
+  },
+  {
+    id: 'trouble-installer-disk-warning',
+    symptom:
+      'Disk Erasing Warning & Target Disk Confirmation in ZonderqOS Graphical Installer',
+    cause:
+      'Before erasing any disk, ZonderqOS Installer displays the disk model, capacity, existing partitions, and a mandatory warning ("WARNING: ALL DATA WILL BE DELETED") requiring you to type the exact device identifier (e.g. DISK-0 or DISK-1). Active installation media and active system disks are strictly locked.',
+    solution:
+      'Verify that you have selected a dedicated physical or virtual disk (never your primary Linux/Windows SSD unless intended), type the exact DISK-X identifier shown in the dialog, and proceed. All other connected disks remain completely untouched and protected by pre-write LBA 0/1 SHA-256 identity verification.',
+  },
+  {
+    id: 'trouble-installer-no-target-disk',
+    symptom:
+      'No eligible target disk appears in Screen 3 of ZonderqOS Graphical Installer',
+    cause:
+      'The virtual or physical disk is attached to an unsupported legacy IDE controller, is smaller than 68 MB, or is marked as active installation media.',
+    solution:
+      'Attach your target disk to a SATA (AHCI), NVMe, VirtIO Block, or USB Mass Storage controller with at least 8 GB capacity (minimum 68 MB), then press F5 inside the installer to rescan disks. After installation finishes, disconnect the ISO/USB drive so UEFI/BIOS boots directly from the installed disk.',
   },
   {
     id: 'trouble-recovery-mode-boot',
