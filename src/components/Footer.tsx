@@ -11,6 +11,8 @@ const FOOTER_SECTIONS: NavSectionId[] = [
   'screenshots',
   'roadmap',
   'downloads',
+  'virtual-machines',
+  'installation',
   'development',
   'faq',
 ];

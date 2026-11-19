@@ -10,6 +10,7 @@ import { FeaturesSection } from '@/sections/FeaturesSection';
 import { HeroSection } from '@/sections/HeroSection';
 import { RoadmapSection } from '@/sections/RoadmapSection';
 import { ScreenshotsSection } from '@/sections/ScreenshotsSection';
+import { VirtualMachinesSection } from '@/sections/VirtualMachinesSection';
 
 export function App(): React.ReactElement {
   const { theme, toggleTheme } = useTheme();
@@ -32,6 +33,7 @@ export function App(): React.ReactElement {
           <ScreenshotsSection />
           <RoadmapSection />
           <DownloadsSection />
+          <VirtualMachinesSection />
           <DevelopmentSection />
           <FaqSection />
         </main>

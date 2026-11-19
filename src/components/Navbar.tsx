@@ -22,6 +22,8 @@ const NAV_ORDER: NavSectionId[] = [
   'screenshots',
   'roadmap',
   'downloads',
+  'virtual-machines',
+  'installation',
   'development',
   'faq',
 ];
@@ -114,7 +116,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps): React.ReactElemen
         </a>
 
         {/* Desktop Nav Links */}
-        <nav aria-label="Main navigation" className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Main navigation" className="hidden items-center gap-0.5 xl:flex">
           {NAV_ORDER.map((id) => {
             const isActive = activeSection === id;
             return (
@@ -127,7 +129,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps): React.ReactElemen
                 }}
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
-                  'relative rounded-xl px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]',
+                  'relative rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6]',
                   isActive
                     ? 'zq-text-primary font-semibold'
                     : 'zq-text-secondary hover:zq-text-primary',
@@ -183,7 +185,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps): React.ReactElemen
             aria-expanded={mobileOpen}
             aria-controls="mobile-nav-menu"
             aria-label={uiText.nav.mobileMenuToggle}
-            className="zq-surface-elevated zq-text-primary inline-flex h-9 w-9 items-center justify-center rounded-lg lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer"
+            className="zq-surface-elevated zq-text-primary inline-flex h-9 w-9 items-center justify-center rounded-lg xl:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3B82F6] cursor-pointer"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -200,7 +202,7 @@ export function Navbar({ theme, onToggleTheme }: NavbarProps): React.ReactElemen
             animate={{ opacity: 1, height: 'auto' }}
             exit={reducedMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="zq-glass overflow-hidden border-t lg:hidden"
+            className="zq-glass overflow-hidden border-t xl:hidden"
           >
             <div className="space-y-1 px-4 py-4">
               {NAV_ORDER.map((id) => {

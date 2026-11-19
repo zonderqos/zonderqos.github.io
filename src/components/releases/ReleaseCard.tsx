@@ -155,7 +155,14 @@ export function ReleaseCard({
         </div>
 
         {/* Quick Telemetry Strip for This Release */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="zq-surface-elevated rounded-xl p-3.5">
+            <div className="zq-text-muted font-mono text-[11px] uppercase">Target Architecture</div>
+            <div className="zq-text-primary mt-1 font-mono text-sm font-bold">
+              x86_64 (UEFI GOP)
+            </div>
+          </div>
+
           <div className="zq-surface-elevated rounded-xl p-3.5">
             <div className="zq-text-muted font-mono text-[11px] uppercase">
               Bootable ISO File Name
@@ -194,6 +201,31 @@ export function ReleaseCard({
               asset{release.assets.length === 1 ? '' : 's'}
             </div>
           </div>
+        </div>
+
+        {/* Supported Platforms Bar */}
+        <div className="zq-surface-elevated mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-2.5 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="zq-text-muted font-mono font-semibold">Supported Environments:</span>
+            <Badge variant="implemented" className="font-mono text-[10px]">
+              QEMU/KVM (CI Verified)
+            </Badge>
+            <Badge variant="inDevelopment" className="font-mono text-[10px]">
+              Physical UEFI USB
+            </Badge>
+            <Badge variant="experimental" className="font-mono text-[10px]">
+              VirtualBox (Experimental)
+            </Badge>
+            <Badge variant="experimental" className="font-mono text-[10px]">
+              VMware (Experimental)
+            </Badge>
+          </div>
+          <a
+            href="#virtual-machines"
+            className="font-mono text-xs font-semibold text-[#3B82F6] hover:underline"
+          >
+            Open Virtual Machines & USB Setup Guide →
+          </a>
         </div>
 
         {/* SHA-256 Checksum Bar (from real GitHub API asset.digest) */}

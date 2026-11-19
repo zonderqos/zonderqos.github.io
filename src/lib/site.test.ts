@@ -30,6 +30,13 @@ import {
 } from '../data/development.ts';
 import { faqData } from '../data/faq.ts';
 import { uiText } from '../data/i18n.ts';
+import {
+  limineBootEntriesData,
+  platformGuidesData,
+  recommendedVmSpecsData,
+  vmTroubleshootingData,
+} from '../data/installationGuide.ts';
+import { detectVmPackageAssets } from './vmAssetDetector.ts';
 
 const REAL_ALPHA_RELEASE_PAYLOAD = {
   id: 451529377,
@@ -373,6 +380,29 @@ test('Historical snapshot analytics never fabricate history and compute daily/we
   assert.equal(comparisons[0].deltaFromPreviousRelease, null);
 });
 
+test('Virtual Machines & Installation Guide data covers all 4 platforms, 11 VM specs, Limine entries, and non-fake VM asset detection', () => {
+  assert.equal(recommendedVmSpecsData.length, 11);
+  assert.equal(limineBootEntriesData.length, 3);
+  assert.equal(platformGuidesData.length, 4);
+  assert.equal(vmTroubleshootingData.length, 8);
+
+  const vbox = platformGuidesData.find((p) => p.id === 'virtualbox');
+  const vmware = platformGuidesData.find((p) => p.id === 'vmware');
+  const qemu = platformGuidesData.find((p) => p.id === 'qemu');
+  const usb = platformGuidesData.find((p) => p.id === 'physical-usb');
+
+  assert.equal(vbox?.verificationLevel, 'Experimental / Community Hypervisor Target');
+  assert.equal(vmware?.verificationLevel, 'Experimental / Community Hypervisor Target');
+  assert.equal(qemu?.verificationLevel, 'Verified in Automated CI (Primary Target)');
+  assert.equal(usb?.verificationLevel, 'Physical UEFI Target (USB)');
+
+  const alphaReleases = normalizeGitHubReleases([REAL_ALPHA_RELEASE_PAYLOAD]);
+  const detected = detectVmPackageAssets(alphaReleases[0].assets);
+  assert.equal(detected.isoAsset?.name, 'ZonderqOS.iso');
+  assert.equal(detected.virtualBoxAsset, null);
+  assert.equal(detected.vmwareAsset, null);
+});
+
 test('100% English language audit passes across all data catalogs, snapshots, and HTML metadata', () => {
   const allCatalogs = {
     uiText,
@@ -384,6 +414,10 @@ test('100% English language audit passes across all data catalogs, snapshots, an
     newsChangelogData,
     verifiedRepoMetrics,
     faqData,
+    recommendedVmSpecsData,
+    limineBootEntriesData,
+    platformGuidesData,
+    vmTroubleshootingData,
   };
 
   const violations = collectPolishViolations(allCatalogs);

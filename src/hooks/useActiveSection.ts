@@ -7,6 +7,8 @@ const SECTION_IDS: NavSectionId[] = [
   'screenshots',
   'roadmap',
   'downloads',
+  'virtual-machines',
+  'installation',
   'development',
   'faq',
 ];

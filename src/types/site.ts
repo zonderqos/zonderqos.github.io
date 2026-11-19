@@ -1,5 +1,13 @@
 export type NavSectionId =
-  'home' | 'features' | 'screenshots' | 'roadmap' | 'downloads' | 'development' | 'faq';
+  | 'home'
+  | 'features'
+  | 'screenshots'
+  | 'roadmap'
+  | 'downloads'
+  | 'virtual-machines'
+  | 'installation'
+  | 'development'
+  | 'faq';
 
 export type FeatureStatus = 'Implemented' | 'Experimental' | 'In Development' | 'Planned';
 
