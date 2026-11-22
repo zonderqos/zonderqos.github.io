@@ -1,7 +1,7 @@
 {
   "repository": "dwierzbicki11/ZOnderqOS",
   "schemaVersion": 1,
-  "lastUpdated": "2026-11-21T18:53:57Z",
+  "lastUpdated": "2026-11-22T05:53:15Z",
   "note": "Real timestamped observations of cumulative GitHub Releases asset download counters collected via GitHub Actions. No synthetic historical data points are fabricated.",
   "snapshots": [
     {
@@ -22,6 +22,14 @@
     },
     {
       "timestamp": "2026-11-21T18:53:57Z",
+      "totalIsoDownloads": 3,
+      "totalAssetDownloads": 3,
+      "perRelease": {
+        "v1.0.0-alfa": 3
+      }
+    },
+    {
+      "timestamp": "2026-11-22T05:53:15Z",
       "totalIsoDownloads": 3,
       "totalAssetDownloads": 3,
       "perRelease": {
