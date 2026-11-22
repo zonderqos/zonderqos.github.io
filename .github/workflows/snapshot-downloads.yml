@@ -7,10 +7,14 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   record-snapshot:
     runs-on: ubuntu-latest
+    outputs:
+      pushed: ${{ steps.commit_snapshot.outputs.pushed }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,16 +25,23 @@ jobs:
           node-version: 22
 
       - name: Fetch live GitHub Releases and append timestamped snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node -e '
           const fs = require("fs");
           const path = "public/data/download-snapshots.json";
           async function run() {
+            const headers = {
+              "Accept": "application/vnd.github+json",
+              "User-Agent": "zonderqos-website-snapshot-bot"
+            };
+            if (process.env.GITHUB_TOKEN) {
+              headers["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
+            }
             const allReleases = [];
             for (let page = 1; page <= 10; page++) {
-              const res = await fetch(`https://api.github.com/repos/dwierzbicki11/ZOnderqOS/releases?per_page=100&page=${page}`, {
-                headers: { "Accept": "application/vnd.github+json", "User-Agent": "zonderqos-website-snapshot-bot" }
-              });
+              const res = await fetch(`https://api.github.com/repos/dwierzbicki11/ZOnderqOS/releases?per_page=100&page=${page}`, { headers });
               if (!res.ok) throw new Error(`GitHub API HTTP ${res.status}`);
               const items = await res.json();
               if (!Array.isArray(items) || items.length === 0) break;
@@ -59,6 +70,17 @@ jobs:
             const snapshots = Array.isArray(dataset.snapshots) ? dataset.snapshots : [];
             const last = snapshots[snapshots.length - 1];
             const sameDay = last && last.timestamp.slice(0, 10) === now.slice(0, 10);
+            const countsUnchanged =
+              last &&
+              last.totalIsoDownloads === totalIsoDownloads &&
+              last.totalAssetDownloads === totalAssetDownloads &&
+              JSON.stringify(last.perRelease || {}) === JSON.stringify(perRelease);
+
+            if (sameDay && countsUnchanged) {
+              console.log(`Same UTC day (${now.slice(0, 10)}) and download counts unchanged (${totalIsoDownloads}); skipping commit.`);
+              return;
+            }
+
             if (sameDay) {
               last.timestamp = now;
               last.totalIsoDownloads = totalIsoDownloads;
@@ -81,6 +103,7 @@ jobs:
           '
 
       - name: Commit and push updated snapshot dataset if changed
+        id: commit_snapshot
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -88,6 +111,17 @@ jobs:
             git add public/data/download-snapshots.json
             git commit -m "chore(analytics): update GitHub Releases download snapshot"
             git push
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
           else
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
             echo "No snapshot changes to commit."
           fi
+
+  redeploy-pages:
+    needs: record-snapshot
+    if: needs.record-snapshot.outputs.pushed == 'true'
+    uses: ./.github/workflows/deploy.yml
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
